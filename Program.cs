@@ -6,11 +6,11 @@ using Microsoft.Win32;
 using CommandLine;
 using CommandLine.Text;
 
-namespace cpath
+namespace npath
 {
     class Options
     {
-        [Option('c', "context", DefaultValue = "both", HelpText = "[user | system]  Required for adding or deleting path items")]
+        [Option('c', "context", DefaultValue = "user", HelpText = "[user | system]  Required for adding or deleting path items")]
         public string Context { get; set; }
 
         [Option('d', "delete", HelpText = "Delete the specified entry from the path")]
@@ -73,7 +73,7 @@ namespace cpath
                 throw new OptionException("Invalid argument");
             }
 
-            ThrowOnInvalidOptionCombination(options);
+            ThrowOnInvalidOptions(options);
             return options;
         }
 
@@ -82,47 +82,42 @@ namespace cpath
             if (!String.IsNullOrEmpty(options.ItemToDelete))
             {
                 DeletePathItem(options);
-            }
-
-            if (!String.IsNullOrEmpty(options.ItemToAppend))
+            } 
+            else if (!String.IsNullOrEmpty(options.ItemToAppend))
             {
                 AppendItemToPath(options);
-            }
-
-            if (!String.IsNullOrEmpty(options.ItemToPrepend))
+            } 
+            else if (!String.IsNullOrEmpty(options.ItemToPrepend))
             {
                 PrependItemToPath(options);
             }
+            else
+            {
+                DisplayPath(options);
+            }
 
-            DisplayPath(options);
         }
 
         static void DisplayPath(Options options)
         {
-            if (options.Context.ToLower().Trim() == "user" || options.Context.ToLower().Trim() == "both")
+            IEnumerable<string> path = GetUserPath();
+            if (options.Verbose)
             {
-                IEnumerable<string> userPath = GetUserPath();
-                if (options.Verbose)
-                {
-                    Console.WriteLine("========User Path========");
-                }
-                foreach (var item in userPath)
-                {
-                    Console.WriteLine(item);
-                }
+                Console.WriteLine("========Current User Path========");
+            }
+            foreach (var item in path)
+            {
+                Console.WriteLine(item);
             }
 
-            if (options.Context.ToLower().Trim() == "system" || options.Context.ToLower().Trim() == "both")
+            path = GetSystemPath();
+            if (options.Verbose)
             {
-                IEnumerable<string> systemPath = GetSystemPath();
-                if (options.Verbose)
-                {
-                    Console.WriteLine("========System Path========");
-                }
-                foreach (var item in systemPath)
-                {
-                    Console.WriteLine(item);
-                }
+                Console.WriteLine("========System Path========");
+            }
+            foreach (var item in path)
+            {
+                Console.WriteLine(item);
             }
         }
 
@@ -141,7 +136,7 @@ namespace cpath
 
         static void DeletePathItem(Options options)
         {
-            var pathList = options.Context.ToLower().Trim() == "user" ? new List<string>(GetUserPath()) : new List<string>(GetSystemPath());
+            var pathList = options.Context.ToLower().Trim() == "system" ? new List<string>(GetSystemPath()) : new List<string>(GetUserPath());
             var found = false;
             for (var i = 0; i < pathList.Count; i++)
             {
@@ -155,7 +150,7 @@ namespace cpath
 
             if (!found)
             {
-                throw new OptionException(String.Format("{0} was not found in the path", options.ItemToDelete));
+                throw new OptionException(String.Format("{0} was not found in the path. Did you forget to include '-c system'?", options.ItemToDelete));
             }
 
             UpdatePath(options, pathList.ToArray());
@@ -163,7 +158,7 @@ namespace cpath
 
         static void AppendItemToPath(Options options)
         {
-            var pathList = options.Context.ToLower().Trim() == "user" ? new List<string>(GetUserPath()) : new List<string>(GetSystemPath());
+            var pathList = options.Context.ToLower().Trim() == "system" ? new List<string>(GetSystemPath()) : new List<string>(GetUserPath());
             ThrowOnDuplicateEntry(options.ItemToAppend, pathList);
             pathList.Add(options.ItemToAppend);
             UpdatePath(options, pathList.ToArray());
@@ -171,7 +166,7 @@ namespace cpath
 
         static void PrependItemToPath(Options options)
         {
-            var pathList = options.Context.ToLower().Trim() == "user" ? new List<string>(GetUserPath()) : new List<string>(GetSystemPath());
+            var pathList = options.Context.ToLower().Trim() == "system" ? new List<string>(GetSystemPath()) : new List<string>(GetUserPath());
             ThrowOnDuplicateEntry(options.ItemToPrepend, pathList);
             pathList.Insert(0, options.ItemToPrepend);
             UpdatePath(options, pathList.ToArray());
@@ -179,13 +174,13 @@ namespace cpath
 
         static void UpdatePath(Options options, IEnumerable<string> newPath)
         {
-            if (options.Context.ToLower().Trim() == "user")
+            if (options.Context.ToLower().Trim() == "system")
             {
-                SetUserPath(newPath);
+                SetSystemPath(newPath);
             }
             else
             {
-                SetSystemPath(newPath);
+                SetUserPath(newPath);
             }
         }
 
@@ -225,11 +220,10 @@ namespace cpath
             return path.ToString();
         }
 
-        static void ThrowOnInvalidOptionCombination(Options options)
+        static void ThrowOnInvalidOptions(Options options)
         {
             ThrowOnDeleteAndAdd(options);
             ThrowOnPrependAndAppend(options);
-            ThrowOnModifyWithoutUserOrSystemSpecified(options);
             ThrowOnInvalidContext(options);
         }
 
@@ -249,23 +243,11 @@ namespace cpath
             }
         }
 
-        static void ThrowOnModifyWithoutUserOrSystemSpecified(Options options)
-        {
-            if ((!String.IsNullOrEmpty(options.ItemToAppend) || !String.IsNullOrEmpty(options.ItemToPrepend) || !String.IsNullOrEmpty(options.ItemToDelete)) &&
-                String.IsNullOrEmpty(options.Context))
-            {
-                throw new OptionException("Must specify context for add or delete operation");
-            }
-        }
-
         static void ThrowOnInvalidContext(Options options)
         {
-            if (!String.IsNullOrEmpty(options.Context))
+            if (options.Context.ToLower() != "user" && options.Context.ToLower() != "system")
             {
-                if (options.Context.ToLower().Trim() != "user" && options.Context.ToLower().Trim() != "system" && options.Context.ToLower().Trim() != "both")
-                {
-                    throw new OptionException("Context must be 'user' or 'system'");
-                }
+                throw new OptionException("Invalid context");
             }
         }
 
