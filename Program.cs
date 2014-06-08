@@ -10,7 +10,7 @@ namespace npath
 {
     class Options
     {
-        [Option('c', "context", DefaultValue = "user", HelpText = "[user | system]  Required for adding or deleting path items")]
+        [Option('c', "context", DefaultValue = "user", HelpText = "[user | system]  Specify current user path or system path when adding or deleting path items.")]
         public string Context { get; set; }
 
         [Option('d', "delete", HelpText = "Delete the specified entry from the path")]
