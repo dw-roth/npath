@@ -1,7 +1,10 @@
 npath
 =====
 
-npath is a tool I created for myself to ease viewing and updating the windows PATH env variable. It does the following things:
+npath is a tool I created for myself to ease viewing and updating the windows PATH env variable. 
+
+What it does
+----
 
 - Displays PATH entries one entry per line
 - Displays PATH entries for the current user PATH, the system PATH, or both
@@ -40,6 +43,18 @@ To append an entry to the system PATH environment variable:
     npath -c system -a "path\to\be\appended"
     
 Only tested on Windows 7 Ultimate with SP 1. Works on my machine :) Before using this tool or any tool that manipulates the Windows registry, it would be a good idea to open regedit and export your registry in case something goes awry.
+
+Setting it up
+----
+
+Copy the files in the dist directory to a folder on your Windows computer (I've only tested on Windows 7 Ultimate with SP1)
+
+OR
+
+Clone, build, and run
+
+Created with Microsoft Visual Studio Ultimate 2012 
+
 
 
 
