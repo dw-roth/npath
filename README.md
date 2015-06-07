@@ -1,7 +1,7 @@
 npath
 =====
 
-npath is a tool I created for myself to ease viewing and updating the windows PATH env variable. 
+npath is a tool I created for myself to ease viewing and updating the Windows PATH env variable. 
 
 What it does
 ----
